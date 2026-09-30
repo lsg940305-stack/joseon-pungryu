@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>조선별곡: 풍류</title>
+  <meta name="description" content="일랜시아풍 조선 온라인 RPG 《조선별곡: 풍류》 — 공식 홈페이지로 이동합니다.">
+  <style>
+    :root { --bg: #120c08; --gold: #f2d894; --muted: #b59d74; --line: #5a3a20; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+      background: var(--bg) radial-gradient(ellipse at top, rgba(217, 180, 106, .12), transparent 60%);
+      color: var(--gold); font-family: 'Gowun Batang', 'Batang', serif; text-align: center; }
+    .box { max-width: 460px; width: 100%; padding: 36px 24px; border: 2px solid var(--line); border-radius: 8px; background: #1d120a; }
+    h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: 3px; }
+    .hanja { color: var(--muted); letter-spacing: 6px; margin-bottom: 24px; }
+    p { color: var(--muted); line-height: 1.7; margin: 0 0 18px; }
+    a.btn { display: inline-block; padding: 12px 22px; border-radius: 4px; background: linear-gradient(#e0b35a, #a8742c); color: #1d1106; text-decoration: none; font-weight: bold; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; animation: b 1s infinite alternate; }
+    @keyframes b { to { opacity: .2; } }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>조선별곡: 풍류</h1>
+    <div class="hanja">朝鮮別曲 · 風流</div>
+    <p id="msg"><span class="dot"></span>관문으로 모시는 중입니다…</p>
+    <div id="act"></div>
+  </div>
+  <script>
+    // 지금 켜진 게임 서버 주소를 읽어 그리로 보낸다 (주소는 서버를 켤 때 npm run open-server 가 갱신)
+    const OWNER = 'lsg940305-stack', REPO = 'joseon-pungryu';
+    const msg = document.getElementById('msg'), act = document.getElementById('act');
+    async function current() {
+      // GitHub API 는 캐시가 거의 없어 방금 바뀐 주소도 바로 보인다. 막히면 같은 폴더의 server.json
+      try {
+        const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/server.json`, { cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); return JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ''))))); }
+      } catch {}
+      const r = await fetch(`server.json?t=${Date.now()}`, { cache: 'no-store' });
+      return r.json();
+    }
+    (async () => {
+      try {
+        const info = await current();
+        if (!info.server) throw new Error('offline');
+        const ok = await fetch(info.server + '/health', { cache: 'no-store' }).then(r => r.ok).catch(() => false);
+        if (!ok) throw new Error('offline');
+        location.replace(info.server + '/' + location.hash);
+      } catch {
+        msg.textContent = '지금은 서버가 쉬고 있습니다. 잠시 뒤에 다시 찾아 주십시오.';
+        act.innerHTML = '<a class="btn" href="">다시 시도</a>';
+      }
+    })();
+  </script>
+</body>
+</html>
